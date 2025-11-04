@@ -1,0 +1,6 @@
+@Aviscom_HostAddress = http://localhost:5172
+
+GET {{Aviscom_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
