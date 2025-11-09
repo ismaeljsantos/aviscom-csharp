@@ -18,7 +18,7 @@ builder.Services.AddSwaggerGen();
 
 // Conexão Banco de Dados
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddDbContext<AviscomContext>(options =>
     options.UseSqlServer(connectionString));
 
 var app = builder.Build();
