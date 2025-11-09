@@ -3,10 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Aviscom.Models.Usuario
 {
-    public class Funcao
+    public class Funcao : BaseEntity
     {
-        [Key]
-        public Ulid Id { get; set; } = Ulid.NewUlid();
 
         [Required]
         public string Titulo { get; set; } = string.Empty;

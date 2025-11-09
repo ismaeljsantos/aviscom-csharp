@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using NUlid;
+﻿// Aviscom.Data/AviscomContext.cs
+using Microsoft.EntityFrameworkCore;
 using Aviscom.Models;
 using Aviscom.Models.Usuario;
+using Aviscom.Data.Configurations;
 
 namespace Aviscom.Data
 {
@@ -24,22 +24,8 @@ namespace Aviscom.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // === Converter TODOS os Ulid para string(26) ===
-            var ulidToStringConverter = new ValueConverter<Ulid, string>(
-                v => v.ToString(),
-                v => Ulid.Parse(v));
-
-            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
-            {
-                foreach (var property in entityType.GetProperties())
-                {
-                    if (property.ClrType == typeof(Ulid))
-                    {
-                        property.SetColumnType("char(26)");
-                        property.SetValueConverter(ulidToStringConverter);
-                    }
-                }
-            }
+            // Aplica todas as configurações
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(AviscomContext).Assembly);
 
             // === Chave composta para UsuarioFuncao ===
             modelBuilder.Entity<UsuarioFuncao>()
@@ -60,15 +46,6 @@ namespace Aviscom.Data
                 .WithMany(pf => pf.EmpresasResponsavel)
                 .HasForeignKey(pj => pj.FkResponsavelId)
                 .OnDelete(DeleteBehavior.Restrict);
-
-            // === Endereço: 1:1 com PF ou PJ (opcional) ===
-            modelBuilder.Entity<Endereco>()
-                .HasIndex(e => e.FkPessoaFisicaId)
-                .IsUnique();
-
-            modelBuilder.Entity<Endereco>()
-                .HasIndex(e => e.FkPessoaJuridicaId)
-                .IsUnique();
         }
 
         public override int SaveChanges()
