@@ -29,7 +29,12 @@ namespace Aviscom.Data
 
             // === Chave composta para UsuarioFuncao ===
             modelBuilder.Entity<UsuarioFuncao>()
-                .HasKey(uf => new { uf.FkUsuarioId, uf.FkFuncaoId, uf.FkSetorId });
+                .HasKey(uf => new { 
+                    uf.FkPessoaFisicaId, 
+                    uf.FkPessoaJuridicaId, 
+                    uf.FkFuncaoId,
+                    uf.FkSetorId 
+                });
 
             // === Índices únicos ===
             modelBuilder.Entity<UsuarioPessoaFisica>()

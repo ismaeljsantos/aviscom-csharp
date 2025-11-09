@@ -33,7 +33,6 @@ namespace Aviscom.Models.Usuario
         // === NAVEGAÇÃO ===
         public ICollection<Endereco> Enderecos { get; set; } = new List<Endereco>();
         public ICollection<Contato> Contatos { get; set; } = new List<Contato>();
-        public ICollection<ExperienciaProfissional> Experiencias { get; set; } = new List<ExperienciaProfissional>();
         public ICollection<UsuarioFuncao> UsuariosFuncoes { get; set; } = new List<UsuarioFuncao>();
     }
 }

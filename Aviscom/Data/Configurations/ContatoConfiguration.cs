@@ -19,6 +19,11 @@ namespace Aviscom.Data.Configurations
             // Índices opcionais
             builder.HasIndex(c => c.FkPessoaFisicaId);
             builder.HasIndex(c => c.FkPessoaJuridicaId);
+
+            builder.ToTable(tb => tb.HasCheckConstraint(
+                "CK_Contatos_Usuario_Exclusivo",
+                "[FkPessoaFisicaId] IS NULL OR [FkPessoaJuridicaId] IS NULL"
+            ));
         }
     }
 }

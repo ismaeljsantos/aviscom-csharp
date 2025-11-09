@@ -7,7 +7,8 @@ namespace Aviscom.Models.Usuario
     public class UsuarioFuncao
     {
         // Chave composta
-        public Ulid FkUsuarioId { get; set; }
+        public Ulid FkPessoaFisicaId { get; set; }
+        public Ulid FkPessoaJuridicaId { get; set; }
         public Ulid FkFuncaoId { get; set; }
         public Ulid FkSetorId { get; set; }
 
@@ -15,10 +16,10 @@ namespace Aviscom.Models.Usuario
         public string Descricao { get; set; } = string.Empty;
 
         // === Pode ser PF ou PJ ===
-        [ForeignKey(nameof(FkUsuarioId))]
+        [ForeignKey(nameof(FkPessoaFisicaId))]
         public UsuarioPessoaFisica? UsuarioFisica { get; set; }
 
-        [ForeignKey(nameof(FkUsuarioId))]
+        [ForeignKey(nameof(FkPessoaJuridicaId))]
         public UsuarioPessoaJuridica? UsuarioJuridica { get; set; }
 
         [ForeignKey(nameof(FkFuncaoId))]
