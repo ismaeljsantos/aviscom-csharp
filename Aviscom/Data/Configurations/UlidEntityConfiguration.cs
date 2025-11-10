@@ -1,8 +1,8 @@
-﻿// Aviscom.Data/Configurations/UlidEntityConfiguration.cs
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NUlid;
+using System.Linq;
 
 namespace Aviscom.Data.Configurations
 {
@@ -18,8 +18,16 @@ namespace Aviscom.Data.Configurations
                 v => v.HasValue ? v.Value.ToString() : (string)null!,
                 v => v != null ? Ulid.Parse(v) : (Ulid?)null);
 
+            var pkPropertyNames = builder.Metadata.FindPrimaryKey()
+                                    ?.Properties.Select(p => p.Name)
+                                    ?? Enumerable.Empty<string>();
+
             foreach (var property in builder.Metadata.GetProperties())
             {
+                if (pkPropertyNames.Contains(property.Name))
+                {
+                    continue;
+                }
                 if (property.ClrType == typeof(Ulid))
                 {
                     builder.Property(property.Name)
