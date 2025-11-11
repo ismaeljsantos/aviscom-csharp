@@ -3,6 +3,7 @@ using Aviscom.DTOs.Usuario;
 using Aviscom.Models.Usuario;
 using Aviscom.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using NUlid;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -22,6 +23,48 @@ namespace Aviscom.Services
             _context = context;
             _logger = logger;
             _encryptionService = encryptionService;
+        }
+
+        public async Task<IEnumerable<UsuarioPessoaFisicaResponse>> GetUsuariosPessoaFisicaAsync()
+        {
+            var usuarios = await _context.UsuariosFisicos
+                .AsNoTracking()
+                .Select(u => new UsuarioPessoaFisicaResponse
+                { 
+                    Id = u.Id,
+                    Nome = u.Nome,
+                    NomeSocial = u.NomeSocial,
+                    Sexo = u.Sexo,
+                    DataNascimento = u.DataNascimento,
+                    NomeMae = u.NomeMae,
+                    NomePai = u.NomePai,
+                    DataCriacao = u.DataCriacao
+                }).ToListAsync();
+
+            return usuarios;
+
+        }
+
+        public async Task<UsuarioPessoaFisicaResponse?> GetPessoaFisicaByIdAsync(Ulid id)
+        {
+
+            var usuario = await _context.UsuariosFisicos 
+                .AsNoTracking()
+                .Where(u => u.Id == id) 
+                .Select(u => new UsuarioPessoaFisicaResponse
+                {
+                    Id = u.Id,
+                    Nome = u.Nome,
+                    NomeSocial = u.NomeSocial,
+                    Sexo = u.Sexo,
+                    DataNascimento = u.DataNascimento,
+                    NomeMae = u.NomeMae,
+                    NomePai = u.NomePai,
+                    DataCriacao = u.DataCriacao
+                })
+                .FirstOrDefaultAsync();
+
+            return usuario;
         }
 
         public async Task<UsuarioPessoaFisicaResponse> CreateUsuarioPessoaFisicaAsync(CreateUsuarioPessoaFisicaRequest request)
@@ -82,17 +125,5 @@ namespace Aviscom.Services
             return Convert.ToBase64String(bytes);
         }
 
-        //private string CriptografarCpfPlaceholder(string cpfLimpo)
-        //{
-        //    // !! RISCO DE SEGURANÇA !!
-        //    // Isto NÃO é criptografia. É apenas um placeholder.
-        //    // A implementação real (ex: AES) é complexa e exige
-        //    // gerenciamento de chaves de criptografia.
-        //    _logger.LogWarning("CRIPTOGRAFIA DE CPF NÃO IMPLEMENTADA. Usando Base64 como placeholder. ISSO DEVE SER CORRIGIDO.");
-
-        //    // Apenas para simular que algo foi feito, vamos inverter e usar Base64
-        //    var bytes = Encoding.UTF8.GetBytes(cpfLimpo);
-        //    return Convert.ToBase64String(bytes);
-        //}
     }
 }

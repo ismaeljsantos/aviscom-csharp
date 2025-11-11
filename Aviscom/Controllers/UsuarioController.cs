@@ -53,16 +53,52 @@ namespace Aviscom.Controllers
             }
         }
 
+        /// <summary>
+        /// Busca uma lista de todos os usuários Pessoa Física.
+        /// </summary>
+        [HttpGet("pessoa-fisica")] // GET /api/usuarios/pessoa-fisica
+        [ProducesResponseType(typeof(IEnumerable<UsuarioPessoaFisicaResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetUsuariosPessoaFisica()
+        {
+            try
+            {
+                var usuarios = await _usuarioService.GetUsuariosPessoaFisicaAsync();
+                return Ok(usuarios);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao buscar lista de usuários PF.");
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
+
 
         /// <summary>
-        /// Busca um usuário Pessoa Física pelo ID. (Ainda não implementado)
+        /// Busca um usuário Pessoa Física pelo ID.
         /// </summary>
         [HttpGet("pessoa-fisica/{id}")]
         [ProducesResponseType(typeof(UsuarioPessoaFisicaResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetPessoaFisicaById(Ulid id)
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetPessoaFisicaById(Ulid id)
         {
-            return Ok(new { Message = $"Endpoint 'Get' para o Id {id} ainda não implementado." });
+            try
+            {
+                var usuario = await _usuarioService.GetPessoaFisicaByIdAsync(id);
+
+                if (usuario == null)
+                {
+                    return NotFound(new { error = $"Usuário com ID {id} não encontrado." });
+                }
+
+                return Ok(usuario);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao buscar usuário PF pelo ID {UserId}.", id);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
         }
     }
 }

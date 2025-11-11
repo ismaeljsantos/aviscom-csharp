@@ -6,7 +6,7 @@ namespace Aviscom.Utils.JsonConverters
 {
     public class CustomDateTimeConverter : JsonConverter<DateTime>
     {
-        // Os formatos que queremos aceitar
+        // Os formatos que são aceitos
         private readonly string[] _formats = { "ddMMyyyy", "dd/MM/yyyy", "dd-MM-yyyy" };
 
         public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -22,7 +22,6 @@ namespace Aviscom.Utils.JsonConverters
                 throw new JsonException("A string da data não pode ser nula ou vazia.");
             }
 
-            // Tenta fazer o "parse" usando os formatos exatos
             if (DateTime.TryParseExact(dateString,
                                      _formats,
                                      CultureInfo.InvariantCulture,
@@ -44,7 +43,7 @@ namespace Aviscom.Utils.JsonConverters
 
         public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
         {
-            // Ao "escrever" (serializar) a data de volta para o JSON,
+            // Ao serializar a data de volta para o JSON,
             // usamos o formato padrão ISO 8601 (recomendado).
             writer.WriteStringValue(value.ToString("o", CultureInfo.InvariantCulture));
         }

@@ -1,6 +1,7 @@
 using Aviscom.Data;
 using Aviscom.Services;
 using Aviscom.Services.Interfaces;
+using Aviscom.Utils.JsonConverters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -12,6 +13,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.Converters.Add(new UlidJsonConverter());
     }
 );
 builder.Services.AddEndpointsApiExplorer();
