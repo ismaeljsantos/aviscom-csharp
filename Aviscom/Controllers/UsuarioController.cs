@@ -128,5 +128,37 @@ namespace Aviscom.Controllers
                 return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
             }
         }
+
+        /// <summary>
+        /// Exclui um usuário Pessoa Física.
+        /// </summary>
+        [HttpDelete("pessoa-fisica/{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> DeletePessoaFisica(Ulid id)
+        {
+            try
+            {
+                var foiExcluido = await _usuarioService.DeletePessoaFisicaAsync(id);
+
+                if (!foiExcluido)
+                {
+                    return NotFound(new { error = $"Usuário com ID {id} não encontrado." });
+                }
+
+                // 204 No Content é a resposta padrão para um DELETE bem-sucedido
+                // que não precisa retornar um corpo.
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                // ATENÇÃO: Se o usuário tiver dados relacionados (ex: Endereços)
+                // e a regra de OnDelete não for 'Cascade', isso pode falhar
+                // com uma DbUpdateException (conflito de chave estrangeira).
+                _logger.LogError(ex, "Erro inesperado ao EXCLUIR usuário PF pelo ID {UserId}.", id);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
     }
 }

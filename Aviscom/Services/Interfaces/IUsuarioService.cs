@@ -10,5 +10,6 @@ namespace Aviscom.Services.Interfaces
 
         Task<UsuarioPessoaFisicaResponse?> GetPessoaFisicaByIdAsync(Ulid id);
         Task<UsuarioPessoaFisicaResponse?> UpdatePessoaFisicaAsync(Ulid id, UpdateUsuarioPessoaFisicaRequest request);
+        Task<bool> DeletePessoaFisicaAsync(Ulid id);
     }
 }

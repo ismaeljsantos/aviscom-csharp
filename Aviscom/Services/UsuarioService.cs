@@ -161,6 +161,21 @@ namespace Aviscom.Services
             };
         }
 
+        public async Task<bool> DeletePessoaFisicaAsync(Ulid id)
+        {
+            var usuario = await _context.UsuariosFisicos.FindAsync(id);
+
+            if(usuario == null)
+            { 
+                return false;
+            }
+
+            _context.UsuariosFisicos.Remove(usuario);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
         private string LimparCpf(string cpf)
         {
             return Regex.Replace(cpf, @"[^\d]", "");
