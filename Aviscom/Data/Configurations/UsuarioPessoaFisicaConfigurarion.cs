@@ -15,6 +15,7 @@ namespace Aviscom.Data.Configurations
             builder.Property(u => u.Nome).IsRequired();
             builder.Property(u => u.CpfCriptografado).IsRequired();
             builder.Property(u => u.CpfHash).IsRequired();
+            builder.Property(u => u.Sexo).IsRequired();
             builder.Property(u => u.DataNascimento).IsRequired();
             builder.Property(u => u.NomeMae).IsRequired();
             builder.Property(u => u.SenhaHash).IsRequired();

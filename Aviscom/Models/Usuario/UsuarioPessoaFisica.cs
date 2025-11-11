@@ -9,6 +9,8 @@ namespace Aviscom.Models.Usuario
         [Required]
         public string Nome { get; set; } = string.Empty;
 
+        public string? NomeSocial { get; set; }
+
         [Required]
         public string CpfCriptografado { get; set; } = string.Empty;
         
@@ -17,6 +19,9 @@ namespace Aviscom.Models.Usuario
         
         [Required]
         public DateTime DataNascimento { get; set; }
+
+        [Required]
+        public string Sexo { get; set; } = string.Empty;
 
         [Required]
         public string NomeMae { get; set; } = string.Empty;
