@@ -100,5 +100,33 @@ namespace Aviscom.Controllers
                 return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
             }
         }
+
+
+        /// <summary>
+        /// Atualiza parcialmente um usuário Pessoa Física.
+        /// </summary>
+        [HttpPatch("pessoa-fisica/{id}")]
+        [ProducesResponseType(typeof(UsuarioPessoaFisicaResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> UpdatePessoaFisica(Ulid id, [FromBody] UpdateUsuarioPessoaFisicaRequest request)
+        {
+            try
+            {
+                var usuario = await _usuarioService.UpdatePessoaFisicaAsync(id, request);
+
+                if (usuario == null)
+                {
+                    return NotFound(new { error = $"Usuário com ID {id} não encontrado." });
+                }
+
+                return Ok(usuario);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao ATUALIZAR usuário PF pelo ID {UserId}.", id);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
     }
 }

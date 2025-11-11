@@ -89,9 +89,9 @@ namespace Aviscom.Services
                 DataNascimento = request.DataNascimento,
                 NomeMae = request.NomeMae,
                 NomePai = request.NomePai,
-                CpfCriptografado = cpfCriptografado, //
-                CpfHash = cpfHash, //
-                SenhaHash = senhaHash //
+                CpfCriptografado = cpfCriptografado, 
+                CpfHash = cpfHash, 
+                SenhaHash = senhaHash 
                 // Id, DataCriacao, DataAtualizacao são preenchidos pela BaseEntity e Context
             };
 
@@ -110,6 +110,54 @@ namespace Aviscom.Services
                 NomeMae = novoUsuario.NomeMae,
                 NomePai = novoUsuario.NomePai,
                 DataCriacao = novoUsuario.DataCriacao
+            };
+        }
+
+        public async Task<UsuarioPessoaFisicaResponse?> UpdatePessoaFisicaAsync(Ulid id, UpdateUsuarioPessoaFisicaRequest request)
+        {
+            var usuario = await _context.UsuariosFisicos.FindAsync(id);
+
+            if (usuario == null)
+            {
+                return null;
+            }
+            if (!string.IsNullOrWhiteSpace(request.Nome))
+            {
+                usuario.Nome = request.Nome;
+            }
+            if (request.NomeSocial != null)
+            {
+                usuario.NomeSocial = request.NomeSocial;
+            }
+            if (request.Sexo != null)
+            {
+                usuario.Sexo = request.Sexo;
+            }
+            if (request.DataNascimento.HasValue) 
+            {
+                usuario.DataNascimento = request.DataNascimento.Value;
+            }
+            if (request.NomeMae != null)
+            {
+                usuario.NomeMae = request.NomeMae;
+            }
+            if (request.NomePai != null)
+            {
+                usuario.NomePai = request.NomePai;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new UsuarioPessoaFisicaResponse
+            {
+                Id = usuario.Id,
+                Nome = usuario.Nome,
+                NomeSocial = usuario.NomeSocial,
+                Sexo = usuario.Sexo,
+                DataNascimento = usuario.DataNascimento,
+                NomeMae = usuario.NomeMae,
+                NomePai = usuario.NomePai,
+                DataCriacao = usuario.DataCriacao
             };
         }
 
