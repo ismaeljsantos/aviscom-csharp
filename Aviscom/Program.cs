@@ -46,6 +46,7 @@ builder.Services.AddDbContext<AviscomContext>(options =>
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
+builder.Services.AddScoped<IEnderecoService, EnderecaoService>();
 
 var app = builder.Build();
 
