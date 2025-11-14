@@ -1,5 +1,6 @@
 ﻿using Aviscom.DTOs.Usuario;
 using Aviscom.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NUlid;
@@ -9,6 +10,7 @@ namespace Aviscom.Controllers
  
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class UsuarioController : ControllerBase
     {
         private readonly IUsuarioService _usuarioService;
