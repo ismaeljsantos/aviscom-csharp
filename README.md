@@ -1,19 +1,21 @@
-# Aviscom# Aviscom API
+# Aviscom API
 
-API RESTful construída em .NET 8 para o sistema Aviscom, focada em gerenciamento de usuários (Pessoa Física e Jurídica), seus endereços e contatos associados.
+API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de utilizadores (Pessoa Física e Jurídica), seus endereços, contactos e perfis associados.
 
 ## Principais Funcionalidades
 
-- **CRUD de Usuário Pessoa Física:** Gerenciamento completo (Criar, Ler, Atualizar, Excluir) de usuários.
-- **CRUD de Entidades Associadas:** Gerenciamento de `Endereco` e `Contato` como recursos separados, ligados aos usuários.
+- **CRUD de Utilizador Pessoa Física:** Gestão completa (Criar, Ler, Atualizar, Excluir) de utilizadores.
+- **CRUD de Entidades Associadas:** Gestão de `Endereco` e `Contato` como recursos separados, ligados aos utilizadores.
+- **Autenticação e Autorização (JWT):** Implementa login com JSON Web Tokens (JWT) e autorização baseada em Funções (Roles) (ex: "Administrador").
+- **Gestão de Funções (Admin):** CRUDs completos e seguros para gerir `Funcoes`, `Setores` e a sua associação aos utilizadores (`UsuarioFuncao`).
 - **Segurança:**
   - **Hashing de Senha:** Senhas são armazenadas usando **BCrypt**.
   - **Hashing de Dados:** CPFs são hasheados com **SHA256** para verificação rápida de duplicidade.
-  - **Criptografia:** CPFs são criptografados com **AES-256** (bidirecional) no banco de dados.
+  - **Criptografia:** CPFs são criptografados com **AES-256** (bidirecional) na base de dados.
 - **Validação Avançada (DTOs):**
   - **CPF:** Aceita formatos com ou sem máscara (`12345678910` ou `123.456.789-10`).
   - **Datas:** Aceita múltiplos formatos de data (`ddMMyyyy`, `dd/MM/yyyy`, `dd-MM-yyyy`) na entrada.
-  - **Validação Customizada:** Regras de negócio complexas (ex: validar `Valor` do contato com base no `Tipo`).
+  - **Validação Customizada:** Regras de negócio complexas (ex: validar `Valor` do contacto com base no `Tipo`).
 - **Formatação de Resposta:**
   - **Datas:** Retorna datas no formato `dd/MM/yyyy`.
   - **Telefones:** Retorna números de telefone e celular com máscaras (ex: `(xx) xxxxx-xxxx`).
@@ -23,10 +25,11 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gerenciament
 
 - **.NET 8** (API)
 - **Entity Framework Core 9** (ORM)
-- **SQL Server** (Banco de Dados)
+- **SQL Server** (Base de Dados)
 - **Swashbuckle (Swagger)** (Documentação da API)
 - **NUlid** (IDs únicos)
 - **BCrypt.Net** (Hashing de Senhas)
+- **Microsoft.AspNetCore.Authentication.JwtBearer** (Autenticação JWT)
 
 ## Como Executar (Setup)
 
@@ -42,10 +45,10 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gerenciament
     cd aviscom-csharp/Aviscom
     ```
 
-3.  **Configure suas Conexões:**
+3.  **Configure as suas Conexões:**
 
-    - Renomeie ou crie o arquivo `appsettings.Development.json` na pasta `Aviscom/`.
-    - Adicione suas configurações. Ele deve se parecer com isto:
+    - Renomeie ou crie o ficheiro `appsettings.Development.json` na pasta `Aviscom/`.
+    - Adicione as suas configurações. Ele deve parecer-se com isto:
 
     ```json
     {
@@ -54,19 +57,20 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gerenciament
       },
       "EncryptionSettings": {
         "AESKey": "SUA_CHAVE_AES_256_EM_BASE64_AQUI"
+      },
+      "JwtSettings": {
+        "SecretKey": "SUA_CHAVE_SECRETA_JWT_MUITO_LONGA_E_ALEATORIA_AQUI",
+        "Issuer": "AviscomAPI",
+        "Audience": "AviscomClient"
       }
     }
     ```
 
-    - **Importante:** Para gerar uma `AESKey` segura, você pode usar este trecho C# (no C# Interactive ou num projeto de console):
-      ```csharp
-      using var aes = System.Security.Cryptography.Aes.Create();
-      Console.WriteLine(Convert.ToBase64String(aes.Key));
-      ```
+    - **Importante:** Gere chaves fortes e aleatórias para `AESKey` e `SecretKey`.
 
 4.  **Aplique as Migrações:**
 
-    - Execute o comando abaixo na pasta `Aviscom/` para criar o banco de dados:
+    - Execute o comando abaixo na pasta `Aviscom/` para criar a base de dados:
 
     ```bash
     dotnet ef database update
@@ -79,30 +83,58 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gerenciament
     ```
 
 6.  **Acesse a Documentação:**
-    - Abra seu navegador e acesse a URL do Swagger (geralmente `http://localhost:5172/swagger` ou `https://localhost:7196/swagger`, verifique seu `launchSettings.json`).
+
+    - Abra o seu navegador e acesse a URL do Swagger (geralmente `http://localhost:5172/swagger` ou `https://localhost:7196/swagger`, verifique o seu `launchSettings.json`).
+
+7.  **Configurando o Primeiro Administrador:**
+    - O _setup_ de administrador tem um problema de "ovo e a galinha" (precisa de ser admin para criar um admin).
+    - **Solução Temporária:** Comente a linha `[Authorize(Policy = "Administrador")]` no topo de `FuncaoController.cs`, `SetorController.cs` e `UsuarioFuncaoController.cs`.
+    - Execute a aplicação e use o Swagger (autenticado como um utilizador normal) para:
+      1.  `POST /api/admin/funcoes` -> Criar a função `"Administrador"`.
+      2.  `POST /api/admin/setores` -> Criar o setor `"Sistema"`.
+      3.  `POST /api/admin/associacoes-funcao/pessoa-fisica` -> Associar o seu utilizador a essa função e setor.
+    - **Finalmente:** Descomente as linhas `[Authorize(Policy = "Administrador")]` e reinicie a aplicação. O seu utilizador agora terá acesso total.
 
 ## Resumo da API (Endpoints)
 
-### Usuário Pessoa Física
+### Autenticação (Login)
 
-- `POST /api/usuarios/pessoa-fisica` - Cria um novo usuário.
-- `GET /api/usuarios/pessoa-fisica` - Lista todos os usuários.
-- `GET /api/usuarios/pessoa-fisica/{id}` - Busca um usuário por ID.
-- `PATCH /api/usuarios/pessoa-fisica/{id}` - Atualiza um usuário (parcial).
-- `DELETE /api/usuarios/pessoa-fisica/{id}` - Exclui um usuário.
+- `POST /api/auth/login/pessoa-fisica` - Autentica um utilizador e retorna um Token JWT.
 
-### Endereços
+### Utilizador Pessoa Física
 
-- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Cria um endereço para um usuário.
-- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Lista os endereços de um usuário.
+- `POST /api/usuarios/pessoa-fisica` - **(Público)** Cria um novo utilizador.
+- `GET /api/usuarios/pessoa-fisica` - **(Admin)** Lista todos os utilizadores.
+- `GET /api/usuarios/pessoa-fisica/{id}` - **(Logado)** Busca um utilizador por ID.
+- `PATCH /api/usuarios/pessoa-fisica/{id}` - **(Logado)** Atualiza um utilizador (parcial).
+- `DELETE /api/usuarios/pessoa-fisica/{id}` - **(Admin)** Exclui um utilizador.
+
+### Endereços (Requer Login)
+
+- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Cria um endereço para um utilizador.
+- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Lista os endereços de um utilizador.
 - `GET /api/enderecos/{id}` - Busca um endereço por seu ID.
 - `PUT /api/enderecos/{id}` - Atualiza um endereço por seu ID.
 - `DELETE /api/enderecos/{id}` - Exclui um endereço por seu ID.
 
-### Contatos
+### Contactos (Requer Login)
 
-- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Cria um contato para um usuário.
-- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Lista os contatos de um usuário.
-- `GET /api/contatos/{id}` - Busca um contato por seu ID.
-- `PUT /api/contatos/{id}` - Atualiza um contato por seu ID.
-- `DELETE /api/contatos/{id}` - Exclui um contato por seu ID.
+- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Cria um contacto para um utilizador.
+- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Lista os contactos de um utilizador.
+- `GET /api/contatos/{id}` - Busca um contacto por seu ID.
+- `PUT /api/contatos/{id}` - Atualiza um contacto por seu ID.
+- `DELETE /api/contatos/{id}` - Exclui um contacto por seu ID.
+
+### Administração (Requer Admin)
+
+- `GET /api/admin/funcoes` - Lista todas as Funções (Roles).
+- `POST /api/admin/funcoes` - Cria uma nova Função.
+- `PUT /api/admin/funcoes/{id}` - Atualiza uma Função.
+- `DELETE /api/admin/funcoes/{id}` - Exclui uma Função.
+- `GET /api/admin/setores` - Lista todos os Setores.
+- `POST /api/admin/setores` - Cria um novo Setor.
+- `PUT /api/admin/setores/{id}` - Atualiza um Setor.
+- `DELETE /api/admin/setores/{id}` - Exclui um Setor.
+- `POST /api/admin/associacoes-funcao/pessoa-fisica` - Associa um utilizador PF a uma Função/Setor.
+- `DELETE /api/admin/associacoes-funcao/pessoa-fisica` - Remove uma associação (requer o body com os 3 IDs).
+- `GET /api/admin/associacoes-funcao/pessoa-fisica/{usuarioPfId}` - Lista as associações de um utilizador.
