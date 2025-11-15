@@ -28,13 +28,13 @@ namespace Aviscom.Data
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AviscomContext).Assembly);
 
             // === Chave composta para UsuarioFuncao ===
-            modelBuilder.Entity<UsuarioFuncao>()
-                .HasKey(uf => new { 
-                    uf.FkPessoaFisicaId, 
-                    uf.FkPessoaJuridicaId, 
-                    uf.FkFuncaoId,
-                    uf.FkSetorId 
-                });
+            //modelBuilder.Entity<UsuarioFuncao>()
+            //    .HasKey(uf => new {
+            //        uf.FkPessoaFisicaId, // Corrigido
+            //        uf.FkPessoaJuridicaId, // Corrigido
+            //        uf.FkFuncaoId,
+            //        uf.FkSetorId
+            //    });
 
             // === Índices únicos ===
             modelBuilder.Entity<UsuarioPessoaFisica>()

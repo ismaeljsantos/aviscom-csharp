@@ -8,7 +8,7 @@ namespace Aviscom.Controllers
 {
     [ApiController]
     [Route("api/admin/funcoes")]
-    [Authorize(Policy = "Administrador")] // TRANCADO: Apenas Admins podem gerir funções
+    [Authorize(Policy = "Administrador")] 
     public class FuncaoController : ControllerBase
     {
         private readonly IFuncaoService _funcaoService;

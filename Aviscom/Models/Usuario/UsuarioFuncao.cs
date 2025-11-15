@@ -4,18 +4,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Aviscom.Models.Usuario
 {
-    public class UsuarioFuncao
+    public class UsuarioFuncao : BaseEntity
     {
         // Chave composta
-        public Ulid FkPessoaFisicaId { get; set; }
-        public Ulid FkPessoaJuridicaId { get; set; }
+        public Ulid? FkPessoaFisicaId { get; set; }
+        public Ulid? FkPessoaJuridicaId { get; set; }
         public Ulid FkFuncaoId { get; set; }
         public Ulid FkSetorId { get; set; }
 
         [Required]
         public string Descricao { get; set; } = string.Empty;
 
-        // === Pode ser PF ou PJ ===
+        // === Navegação ===
         [ForeignKey(nameof(FkPessoaFisicaId))]
         public UsuarioPessoaFisica? UsuarioFisica { get; set; }
 

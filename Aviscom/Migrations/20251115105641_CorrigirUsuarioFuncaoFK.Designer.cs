@@ -4,6 +4,7 @@ using Aviscom.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Aviscom.Migrations
 {
     [DbContext(typeof(AviscomContext))]
-    partial class AviscomContextModelSnapshot : ModelSnapshot
+    [Migration("20251115105641_CorrigirUsuarioFuncaoFK")]
+    partial class CorrigirUsuarioFuncaoFK
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -324,38 +327,23 @@ namespace Aviscom.Migrations
 
             modelBuilder.Entity("Aviscom.Models.Usuario.UsuarioFuncao", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("char(26)");
-
-                    b.Property<DateTime>("DataAtualizacao")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<DateTime>("DataCriacao")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("GETUTCDATE()");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FkFuncaoId")
-                        .IsRequired()
-                        .HasColumnType("char(26)");
-
                     b.Property<string>("FkPessoaFisicaId")
                         .HasColumnType("char(26)");
 
                     b.Property<string>("FkPessoaJuridicaId")
                         .HasColumnType("char(26)");
 
-                    b.Property<string>("FkSetorId")
-                        .IsRequired()
+                    b.Property<string>("FkFuncaoId")
                         .HasColumnType("char(26)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("FkSetorId")
+                        .HasColumnType("char(26)");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("FkPessoaFisicaId", "FkPessoaJuridicaId", "FkFuncaoId", "FkSetorId");
 
                     b.HasIndex("FkFuncaoId");
 
@@ -363,14 +351,7 @@ namespace Aviscom.Migrations
 
                     b.HasIndex("FkSetorId");
 
-                    b.HasIndex("FkPessoaFisicaId", "FkPessoaJuridicaId", "FkFuncaoId", "FkSetorId")
-                        .IsUnique()
-                        .HasFilter("[FkPessoaFisicaId] IS NOT NULL AND [FkPessoaJuridicaId] IS NOT NULL");
-
-                    b.ToTable("UsuariosFuncoes", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_UsuarioFuncao_Usuario_Exclusivo", "[FkPessoaFisicaId] IS NULL OR [FkPessoaJuridicaId] IS NULL");
-                        });
+                    b.ToTable("UsuariosFuncoes");
                 });
 
             modelBuilder.Entity("Aviscom.Models.Usuario.UsuarioPessoaFisica", b =>
@@ -562,11 +543,15 @@ namespace Aviscom.Migrations
 
                     b.HasOne("Aviscom.Models.Usuario.UsuarioPessoaFisica", "UsuarioFisica")
                         .WithMany("UsuariosFuncoes")
-                        .HasForeignKey("FkPessoaFisicaId");
+                        .HasForeignKey("FkPessoaFisicaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Aviscom.Models.Usuario.UsuarioPessoaJuridica", "UsuarioJuridica")
                         .WithMany("UsuariosFuncoes")
-                        .HasForeignKey("FkPessoaJuridicaId");
+                        .HasForeignKey("FkPessoaJuridicaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Aviscom.Models.Usuario.Setor", "Setor")
                         .WithMany("UsuarioFuncoes")

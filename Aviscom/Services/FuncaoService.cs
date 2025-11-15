@@ -18,7 +18,7 @@ namespace Aviscom.Services
             _logger = logger;
         }
 
-        public async Task<FuncaoService> CreateFuncaoAsync(CreateFuncaoRequest request)
+        public async Task<FuncaoResponse> CreateFuncaoAsync(CreateFuncaoRequest request)
         {
             var existe = await _context.Funcoes.AnyAsync(f => f.Titulo.ToLower() == request.Titulo.ToLower());
             if (existe)
@@ -35,6 +35,8 @@ namespace Aviscom.Services
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("Nova Função {FuncaoId} criada com o título: {Titulo}", novaFuncao.Id, novaFuncao.Titulo);
+
+            // Esta linha agora funciona porque MapearParaResponse retorna FuncaoResponse
             return MapearParaResponse(novaFuncao);
         }
 
@@ -85,9 +87,9 @@ namespace Aviscom.Services
             {
                 return false;
             }
+            // TODO: Adicionar lógica para verificar se a função
+            // a ser usada por algum 'UsuarioFuncao' antes de apagar.
 
-            // Atenção: Adicionar lógica futura para verificar se a função
-            // está a ser usada por algum 'UsuarioFuncao' antes de apagar.
             _context.Funcoes.Remove(funcao);
             await _context.SaveChangesAsync();
 
@@ -95,6 +97,8 @@ namespace Aviscom.Services
             return true;
         }
 
+        // --- Método Auxiliar ---
+        // A CORREÇÃO ESTÁ AQUI: O tipo de retorno deve ser 'FuncaoResponse'
         private FuncaoResponse MapearParaResponse(Funcao funcao)
         {
             return new FuncaoResponse
