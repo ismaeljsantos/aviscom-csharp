@@ -80,6 +80,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFuncaoService, FuncaoService>();
 builder.Services.AddScoped<ISetorService, SetorService>();
 builder.Services.AddScoped<IUsuarioFuncaoService, UsuarioFuncaoService>();
+builder.Services.AddScoped<IEmpresaService, EmpresaService>();
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!);
 
