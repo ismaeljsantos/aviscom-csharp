@@ -81,6 +81,8 @@ builder.Services.AddScoped<IFuncaoService, FuncaoService>();
 builder.Services.AddScoped<ISetorService, SetorService>();
 builder.Services.AddScoped<IUsuarioFuncaoService, UsuarioFuncaoService>();
 builder.Services.AddScoped<IEmpresaService, EmpresaService>();
+builder.Services.AddScoped<IInstituicaoService, InstituicaoService>();
+builder.Services.AddScoped<IEscolaridadeService, EscolaridadeService>();
 
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:SecretKey"]!);
 
