@@ -9,7 +9,12 @@ namespace Aviscom.Services.Interfaces
         Task<IEnumerable<EnderecoResponse>> GetEnderecosByPessoaFisicaIdAsync(Ulid usuarioPfId);
         Task<EnderecoResponse?> UpdateEnderecoAsync(Ulid id, CreateEnderecoRequest request);
         Task<bool> DeleteEnderecoAsync(Ulid id);
-
         Task<EnderecoResponse?> GetEnderecoByIdAsync(Ulid id);
+
+        //=============================
+        //====== MÉTODOS PARA PJ ======
+        //=============================
+        Task<EnderecoResponse> CreateEnderecoParaPessoaJuridicaAsync(Ulid usuarioPjId, CreateEnderecoRequest request);
+        Task<IEnumerable<EnderecoResponse>> GetEnderecosByPessoaJuridicaIdAsync(Ulid usuarioPjId);
     }
 }

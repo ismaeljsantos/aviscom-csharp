@@ -7,7 +7,7 @@ using NUlid;
 
 namespace Aviscom.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
     [Authorize]
     public class EnderecoController : ControllerBase
@@ -149,6 +149,46 @@ namespace Aviscom.Controllers
                 return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
             }
 
+        }
+
+        //=============================
+        //====== MÉTODOS PARA PJ ======
+        //=============================
+
+        /// <summary>
+        /// Cria um novo endereço para um utilizador Pessoa Jurídica. (Requer Login)
+        /// </summary>
+        [HttpPost("usuarios/pessoa-juridica/{usuarioPjId}/enderecos")]
+        [ProducesResponseType(typeof(EnderecoResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CreateEnderecoParaPessoaJuridica([FromRoute] Ulid usuarioPjId, [FromBody] CreateEnderecoRequest request)
+        {
+            try
+            {
+                var novoEndereco = await _enderecoService.CreateEnderecoParaPessoaJuridicaAsync(usuarioPjId, request);
+                return CreatedAtAction(nameof(GetEnderecoById), new { id = novoEndereco.Id }, novoEndereco);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogWarning("Falha ao criar endereço PJ: {Message}", ex.Message);
+                return NotFound(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao criar endereço para o utilizador PJ {UsuarioId}", usuarioPjId);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
+
+        /// <summary>
+        /// Lista todos os endereços de um utilizador Pessoa Jurídica. (Requer Login)
+        /// </summary>
+        [HttpGet("usuarios/pessoa-juridica/{usuarioPjId}/enderecos")]
+        [ProducesResponseType(typeof(IEnumerable<EnderecoResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetEnderecosPessoaJuridica([FromRoute] Ulid usuarioPjId)
+        {
+            var enderecos = await _enderecoService.GetEnderecosByPessoaJuridicaIdAsync(usuarioPjId);
+            return Ok(enderecos);
         }
     }
 }

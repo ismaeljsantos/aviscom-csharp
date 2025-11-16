@@ -150,5 +150,65 @@ namespace Aviscom.Services
                 FkPessoaJuridicaId = endereco.FkPessoaJuridicaId
             };
         }
+
+        //=============================
+        //====== MÉTODOS PARA PJ ======
+        //=============================
+
+        public async Task<EnderecoResponse> CreateEnderecoParaPessoaJuridicaAsync(Ulid usuarioPjId, CreateEnderecoRequest request)
+        {
+            // 1. Verifica se o utilizador "dono" (PJ) existe
+            var usuario = await _context.UsuariosJuridicos.FindAsync(usuarioPjId);
+            if (usuario == null)
+            {
+                throw new KeyNotFoundException($"Utilizador Pessoa Jurídica com ID {usuarioPjId} não encontrado.");
+            }
+
+            // 2. Mapeia o DTO para a Entidade
+            var novoEndereco = new Endereco
+            {
+                TipoLogradouro = request.TipoLogradouro,
+                Logradouro = request.Logradouro,
+                Numero = request.Numero,
+                Complemento = request.Complemento,
+                Bairro = request.Bairro,
+                Cidade = request.Cidade,
+                Estado = request.Estado,
+                Cep = request.Cep,
+                FkPessoaJuridicaId = usuarioPjId // ASSOCIA O ENDEREÇO À PJ
+            };
+
+            // 3. Salva no banco
+            await _context.Enderecos.AddAsync(novoEndereco);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Endereço {EnderecoId} criado para o utilizador PJ {UsuarioId}", novoEndereco.Id, usuarioPjId);
+
+            // 4. Retorna o DTO de Resposta
+            return MapearParaResponse(novoEndereco);
+        }
+
+        public async Task<IEnumerable<EnderecoResponse>> GetEnderecosByPessoaJuridicaIdAsync(Ulid usuarioPjId)
+        {
+            return await _context.Enderecos
+                .AsNoTracking()
+                .Where(e => e.FkPessoaJuridicaId == usuarioPjId) // Filtra por PJ ID
+                .Select(e => new EnderecoResponse
+                {
+                    Id = e.Id,
+                    TipoLogradouro = e.TipoLogradouro,
+                    Logradouro = e.Logradouro,
+                    Numero = e.Numero,
+                    Complemento = e.Complemento,
+                    Bairro = e.Bairro,
+                    Cidade = e.Cidade,
+                    Estado = e.Estado,
+                    Cep = e.Cep,
+                    FkPessoaFisicaId = e.FkPessoaFisicaId,
+                    FkPessoaJuridicaId = e.FkPessoaJuridicaId
+                })
+                .ToListAsync();
+        }
+
     }
 }

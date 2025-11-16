@@ -7,7 +7,7 @@ using NUlid;
 
 namespace Aviscom.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api")]
     [ApiController]
     [Authorize]
     public class ExperienciaProfissionalController : ControllerBase
