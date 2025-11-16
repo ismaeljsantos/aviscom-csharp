@@ -5,13 +5,14 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 ## Principais Funcionalidades
 
 - **CRUD de Utilizador Pessoa Física:** Gestão completa (Criar, Ler, Atualizar, Excluir) de utilizadores.
-- **Gestão de Perfil de PF:** CRUDs completos para `Endereco`, `Contato`, `Escolaridade` e `ExperienciaProfissional`.
+- **CRUD de Utilizador Pessoa Jurídica:** Gestão completa (Criar, Ler, Atualizar, Excluir) de utilizadores PJ.
+- **Gestão de Perfil:** CRUDs completos para `Endereco`, `Contato`, `Escolaridade` e `ExperienciaProfissional`, associados tanto a Pessoas Físicas como Jurídicas.
 - **Gestão de Dados Mestres:** CRUDs seguros (apenas Admin) para entidades de apoio como `Empresa` e `Instituicao`.
-- **Autenticação e Autorização (JWT):** Implementa login com JSON Web Tokens (JWT) e autorização baseada em Funções (Roles) (ex: "Administrador").
+- **Autenticação e Autorização (JWT):** Implementa login com JSON Web Tokens (JWT) para ambos PF e PJ, e autorização baseada em Funções (Roles) (ex: "Administrador").
 - **Gestão de Funções (Admin):** CRUDs completos e seguros para gerir `Funcoes`, `Setores` e a sua associação aos utilizadores (`UsuarioFuncao`).
 - **Segurança:**
   - **Hashing de Senha:** Senhas são armazenadas usando **BCrypt**.
-  - **Hashing de Dados:** CPFs são hasheados com **SHA256** para verificação rápida de duplicidade.
+  - **Hashing de Dados:** CPFs/CNPJs são hasheados com **SHA256** para verificação rápida de duplicidade.
   - **Criptografia:** CPFs são criptografados com **AES-256** (bidirecional) na base de dados.
 - **Validação Avançada (DTOs):**
   - **CPF/CNPJ:** Aceita formatos com ou sem máscara.
@@ -100,7 +101,8 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 
 ### Autenticação (Login)
 
-- `POST /api/auth/login/pessoa-fisica` - Autentica um utilizador e retorna um Token JWT.
+- `POST /api/auth/login/pessoa-fisica` - Autentica um utilizador PF e retorna um Token JWT.
+- `POST /api/auth/login/pessoa-juridica` - Autentica um utilizador PJ e retorna um Token JWT.
 
 ### Utilizador Pessoa Física
 
@@ -110,18 +112,30 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 - `PATCH /api/usuarios/pessoa-fisica/{id}` - **(Logado)** Atualiza um utilizador (parcial).
 - `DELETE /api/usuarios/pessoa-fisica/{id}` - **(Admin)** Exclui um utilizador.
 
+### Utilizador Pessoa Jurídica
+
+- `POST /api/usuarios/pessoa-juridica` - **(Público)** Cria um novo utilizador.
+- `GET /api/usuarios/pessoa-juridica` - **(Admin)** Lista todos os utilizadores.
+- `GET /api/usuarios/pessoa-juridica/{id}` - **(Logado)** Busca um utilizador por ID.
+- `PATCH /api/usuarios/pessoa-juridica/{id}` - **(Logado)** Atualiza um utilizador (parcial).
+- `DELETE /api/usuarios/pessoa-juridica/{id}` - **(Admin)** Exclui um utilizador.
+
 ### Endereços (Requer Login)
 
-- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Cria um endereço para um utilizador.
-- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Lista os endereços de um utilizador.
+- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Cria um endereço para um PF.
+- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Lista os endereços de um PF.
+- `POST /api/usuarios/pessoa-juridica/{usuarioPjId}/enderecos` - Cria um endereço para um PJ.
+- `GET /api/usuarios/pessoa-juridica/{usuarioPjId}/enderecos` - Lista os endereços de um PJ.
 - `GET /api/enderecos/{id}` - Busca um endereço por seu ID.
 - `PUT /api/enderecos/{id}` - Atualiza um endereço por seu ID.
 - `DELETE /api/enderecos/{id}` - Exclui um endereço por seu ID.
 
 ### Contactos (Requer Login)
 
-- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Cria um contacto para um utilizador.
-- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Lista os contactos de um utilizador.
+- `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Cria um contacto para um PF.
+- `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Lista os contactos de um PF.
+- `POST /api/usuarios/pessoa-juridica/{usuarioPjId}/contatos` - Cria um contacto para um PJ.
+- `GET /api/usuarios/pessoa-juridica/{usuarioPjId}/contatos` - Lista os contactos de um PJ.
 - `GET /api/contatos/{id}` - Busca um contacto por seu ID.
 - `PUT /api/contatos/{id}` - Atualiza um contacto por seu ID.
 - `DELETE /api/contatos/{id}` - Exclui um contacto por seu ID.
