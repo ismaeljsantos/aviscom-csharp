@@ -142,5 +142,43 @@ namespace Aviscom.Controllers
                 return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
             }
         }
+
+        // === NOVOS ENDPOINTS DE PESSOA JURÍDICA ===
+
+        /// <summary>
+        /// Cria um novo contacto para um utilizador Pessoa Jurídica. (Requer Login)
+        /// </summary>
+        [HttpPost("usuarios/pessoa-juridica/{usuarioPjId}/contatos")]
+        [ProducesResponseType(typeof(ContatoResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CreateContatoParaPessoaJuridica([FromRoute] Ulid usuarioPjId, [FromBody] CreateContatoRequest request)
+        {
+            try
+            {
+                var novoContato = await _contatoService.CreateContatoParaPessoaJuridicaAsync(usuarioPjId, request);
+                return CreatedAtAction(nameof(GetContatoById), new { id = novoContato.Id }, novoContato);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                _logger.LogWarning("Falha ao criar contacto PJ: {Message}", ex.Message);
+                return NotFound(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao criar contacto para o utilizador PJ {UsuarioId}", usuarioPjId);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
+
+        /// <summary>
+        /// Lista todos os contactos de um utilizador Pessoa Jurídica. (Requer Login)
+        /// </summary>
+        [HttpGet("usuarios/pessoa-juridica/{usuarioPjId}/contatos")]
+        [ProducesResponseType(typeof(IEnumerable<ContatoResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetContatosPessoaJuridica([FromRoute] Ulid usuarioPjId)
+        {
+            var contatos = await _contatoService.GetContatosByPessoaJuridicaIdAsync(usuarioPjId);
+            return Ok(contatos);
+        }
     }
 }

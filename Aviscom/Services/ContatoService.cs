@@ -19,8 +19,6 @@ namespace Aviscom.Services
             _logger = logger;
         }
 
-   
-
         public async Task<ContatoResponse> CreateContatoParaPessoaFisicaAsync(Ulid usuarioPfId, CreateContatoRequest request)
         {
             
@@ -125,6 +123,62 @@ namespace Aviscom.Services
             return true;
         }
 
+        // ====================================
+        // === MÉTODOS PARA PESSOA JURÍDICA ===
+        // ====================================
+
+        public async Task<ContatoResponse> CreateContatoParaPessoaJuridicaAsync(Ulid usuarioPjId, CreateContatoRequest request)
+        {
+            // 1. Verifica se o utilizador "dono" (PJ) existe
+            var usuario = await _context.UsuariosJuridicos.FindAsync(usuarioPjId);
+            if (usuario == null)
+            {
+                throw new KeyNotFoundException($"Utilizador Pessoa Jurídica com ID {usuarioPjId} não encontrado.");
+            }
+
+            // 2. Limpa o valor (reutiliza a lógica de validação/limpeza)
+            string valorParaSalvar = request.Valor;
+            if (request.Tipo.Equals("Telefone", StringComparison.OrdinalIgnoreCase) ||
+                request.Tipo.Equals("Celular", StringComparison.OrdinalIgnoreCase))
+            {
+                valorParaSalvar = LimparTelefone(request.Valor);
+            }
+
+            // 3. Mapeia o DTO para a Entidade
+            var novoContato = new Contato
+            {
+                Tipo = request.Tipo,
+                Valor = valorParaSalvar, // Salva o valor limpo/validado
+                FkPessoaJuridicaId = usuarioPjId // ASSOCIA O CONTATO À PJ
+            };
+
+            // 4. Salva no banco
+            await _context.Contatos.AddAsync(novoContato);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Contacto {ContatoId} criado para o utilizador PJ {UsuarioId}", novoContato.Id, usuarioPjId);
+
+            // 5. Retorna o DTO de Resposta
+            return MapearParaResponse(novoContato);
+        }
+
+        public async Task<IEnumerable<ContatoResponse>> GetContatosByPessoaJuridicaIdAsync(Ulid usuarioPjId)
+        {
+            return await _context.Contatos
+                .AsNoTracking()
+                .Where(c => c.FkPessoaJuridicaId == usuarioPjId) // Filtra por PJ ID
+                .Select(c => new ContatoResponse
+                {
+                    Id = c.Id,
+                    Tipo = c.Tipo,
+                    Valor = c.Valor, // O DTO de Resposta já trata da formatação (máscara)
+                    FkPessoaFisicaId = c.FkPessoaFisicaId,
+                    FkPessoaJuridicaId = c.FkPessoaJuridicaId
+                })
+                .ToListAsync();
+        }
+
+        //=========================================================
         private ContatoResponse MapearParaResponse(Contato contato)
         {
             return new ContatoResponse

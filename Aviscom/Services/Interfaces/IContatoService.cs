@@ -13,5 +13,9 @@ namespace Aviscom.Services.Interfaces
         Task<ContatoResponse?> GetContatoByIdAsync(Ulid id);
         Task<ContatoResponse?> UpdateContatoAsync(Ulid id, CreateContatoRequest request);
         Task<bool> DeleteContatoAsync(Ulid id);
+
+        // === NOVOS MÉTODOS PARA PJ ===
+        Task<ContatoResponse> CreateContatoParaPessoaJuridicaAsync(Ulid usuarioPjId, CreateContatoRequest request);
+        Task<IEnumerable<ContatoResponse>> GetContatosByPessoaJuridicaIdAsync(Ulid usuarioPjId);
     }
 }
