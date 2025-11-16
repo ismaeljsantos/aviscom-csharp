@@ -1,5 +1,6 @@
 ﻿using Aviscom.Data;
 using Aviscom.Dtos.Auth;
+using Aviscom.DTOs.Auth;
 using Aviscom.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
@@ -76,6 +77,61 @@ namespace Aviscom.Services
             }
         }
 
+        public async Task<LoginResponse?> LoginPessoaJuridicaAsync(LoginPjRequest request)
+        {
+            try
+            {
+                // 1. Limpar e hashear o CNPJ
+                var cnpjLimpo = LimparCnpj(request.Cnpj);
+                var cnpjHash = GerarHashSHA256(cnpjLimpo);
+
+                // 2. Encontrar o usuário pelo CnpjHash
+                var usuario = await _context.UsuariosJuridicos
+                                    .AsNoTracking()
+                                    .FirstOrDefaultAsync(u => u.CnpjHash == cnpjHash);
+
+                if (usuario == null)
+                {
+                    _logger.LogWarning("Tentativa de login PJ falhou: CNPJ não encontrado (Hash: {CnpjHash})", cnpjHash);
+                    return null; // Usuário não encontrado
+                }
+
+                // 3. Verificar a Senha
+                bool senhaValida = BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash);
+
+                if (!senhaValida)
+                {
+                    _logger.LogWarning("Tentativa de login PJ falhou: Senha inválida para usuário {UsuarioId}", usuario.Id);
+                    return null; // Senha incorreta
+                }
+
+                // 4. Buscar as Funções (Roles) do usuário PJ
+                var funcoes = await _context.UsuariosFuncoes
+                    .Where(uf => uf.FkPessoaJuridicaId == usuario.Id) //
+                    .Include(uf => uf.Funcao)
+                    .Select(uf => uf.Funcao.Titulo) //
+                    .ToListAsync();
+
+                // 5. Gerar o Token (usando o novo método sobrecarregado)
+                var tokenString = _tokenService.GenerateToken(usuario, funcoes);
+
+                // 6. Retornar a Resposta
+                return new LoginResponse
+                {
+                    Token = tokenString,
+                    Expiration = DateTime.UtcNow.AddHours(8),
+                    UsuarioId = usuario.Id,
+                    Nome = usuario.RazaoSocial, // Retorna a RazaoSocial no campo "Nome"
+                    Funcoes = funcoes
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado durante o processo de login PJ para CNPJ (Hash: {CnpjHash})", GerarHashSHA256(LimparCnpj(request.Cnpj)));
+                return null;
+            }
+        }
+
         // --- Métodos Auxiliares (copiados do UsuarioService) ---
         private string LimparCpf(string cpf)
         {
@@ -87,6 +143,12 @@ namespace Aviscom.Services
             using var sha256 = SHA256.Create();
             var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
             return Convert.ToBase64String(bytes);
+        }
+
+        private string LimparCnpj(string cnpj)
+        {
+            // Remove tudo que não for dígito
+            return Regex.Replace(cnpj ?? "", @"[^\d]", "");
         }
     }
 }

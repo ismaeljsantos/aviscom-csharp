@@ -162,5 +162,125 @@ namespace Aviscom.Controllers
                 return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
             }
         }
+
+
+        // ===================================
+        // ====== ENDPOINTS (CRUD PJ) ========
+        // ===================================
+
+
+        /// <summary>
+        /// Cria um novo utilizador do tipo Pessoa Jurídica.
+        /// </summary>
+        [HttpPost("pessoa-juridica")]
+        [AllowAnonymous] // Aberto para registo público
+        [ProducesResponseType(typeof(UsuarioPessoaJuridicaResponse), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> CreatePessoaJuridica([FromBody] CreateUsuarioPessoaJuridicaRequest request)
+        {
+            try
+            {
+                var novoUsuarioPJ = await _usuarioService.CreateUsuarioPessoaJuridicaAsync(request);
+
+                // Retorna 201 Created
+                return CreatedAtAction(
+                    nameof(GetPessoaJuridicaById), // Nome do método 'Get'
+                    new { id = novoUsuarioPJ.Id },  // Parâmetro da rota do 'Get'
+                    novoUsuarioPJ);                 // O objeto criado
+            }
+            catch (KeyNotFoundException ex) // Se o Responsável PF não for encontrado
+            {
+                _logger.LogWarning("Falha ao criar PJ: {Message}", ex.Message);
+                return NotFound(new { error = ex.Message });
+            }
+            catch (InvalidOperationException ex) // Se o CNPJ já existir
+            {
+                _logger.LogWarning("Falha ao criar PJ: {Message}", ex.Message);
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao criar utilizador PJ.");
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
+
+        /// <summary>
+        /// Busca uma lista de todos os utilizadores Pessoa Jurídica. (Requer Admin)
+        /// </summary>
+        [HttpGet("pessoa-juridica")]
+        [Authorize(Policy = "Administrador")] // 1. APENAS ADMIN
+        [ProducesResponseType(typeof(IEnumerable<UsuarioPessoaJuridicaResponse>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetUsuariosPessoaJuridica()
+        {
+            var usuariosPJ = await _usuarioService.GetUsuariosPessoaJuridicaAsync();
+            return Ok(usuariosPJ);
+        }
+
+        /// <summary>
+        /// Busca um utilizador Pessoa Jurídica pelo ID. (Requer Login)
+        /// </summary>
+        [HttpGet("pessoa-juridica/{id}")]
+        [ProducesResponseType(typeof(UsuarioPessoaJuridicaResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetPessoaJuridicaById(Ulid id)
+        {
+            // (Usa o [Authorize] da classe - requer login)
+            var usuarioPJ = await _usuarioService.GetPessoaJuridicaByIdAsync(id);
+            if (usuarioPJ == null)
+            {
+                return NotFound(new { error = $"Utilizador Pessoa Jurídica com ID {id} não encontrado." });
+            }
+            return Ok(usuarioPJ);
+        }
+
+        /// <summary>
+        /// Atualiza parcialmente um utilizador Pessoa Jurídica. (Requer Login)
+        /// </summary>
+        [HttpPatch("pessoa-juridica/{id}")]
+        [ProducesResponseType(typeof(UsuarioPessoaJuridicaResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdatePessoaJuridica(Ulid id, [FromBody] UpdateUsuarioPessoaJuridicaRequest request)
+        {
+            // (Usa o [Authorize] da classe - requer login)
+            // TODO FUTURO: Adicionar segurança (só o próprio ou Admin pode atualizar)
+            try
+            {
+                var usuarioPJ = await _usuarioService.UpdatePessoaJuridicaAsync(id, request);
+                if (usuarioPJ == null)
+                {
+                    return NotFound(new { error = $"Utilizador Pessoa Jurídica com ID {id} não encontrado." });
+                }
+                return Ok(usuarioPJ);
+            }
+            catch (KeyNotFoundException ex) // Se o novo Responsável não for encontrado
+            {
+                _logger.LogWarning("Falha ao atualizar PJ: {Message}", ex.Message);
+                return NotFound(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao atualizar Utilizador PJ {UserId}", id);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
+
+        /// <summary>
+        /// Exclui um utilizador Pessoa Jurídica. (Requer Admin)
+        /// </summary>
+        [HttpDelete("pessoa-juridica/{id}")]
+        [Authorize(Policy = "Administrador")] // 2. APENAS ADMIN
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> DeletePessoaJuridica(Ulid id)
+        {
+            var sucesso = await _usuarioService.DeletePessoaJuridicaAsync(id);
+            if (!sucesso)
+            {
+                return NotFound(new { error = $"Utilizador Pessoa Jurídica com ID {id} não encontrado." });
+            }
+            return NoContent();
+        }
     }
 }
