@@ -99,5 +99,96 @@ namespace Aviscom.Services
                 request.FkFuncaoId, request.FkUsuarioPfId, request.FkSetorId);
             return true;
         }
+
+        // ===================================
+        // === MÉTODOS PARA PESSOA JURÍDICA ==
+        // ===================================
+
+        public async Task<UsuarioFuncaoResponse> AssignFuncaoToPjAsync(AssignFuncaoPjRequest request)
+        {
+            // 1. Validar se as entidades (Usuário PJ, Função, Setor) existem
+            var usuario = await _context.UsuariosJuridicos.FindAsync(request.FkUsuarioPjId);
+            if (usuario == null)
+                throw new KeyNotFoundException($"Usuário Pessoa Jurídica com ID {request.FkUsuarioPjId} não encontrado.");
+
+            var funcao = await _context.Funcoes.FindAsync(request.FkFuncaoId);
+            if (funcao == null)
+                throw new KeyNotFoundException($"Função com ID {request.FkFuncaoId} não encontrada.");
+
+            var setor = await _context.Setores.FindAsync(request.FkSetorId);
+            if (setor == null)
+                throw new KeyNotFoundException($"Setor com ID {request.FkSetorId} não encontrado.");
+
+            // 2. Criar a nova associação, definindo FkPessoaJuridicaId
+            var novaAssociacao = new UsuarioFuncao
+            {
+                FkPessoaJuridicaId = request.FkUsuarioPjId, // Usamos o ID do PJ
+                FkFuncaoId = request.FkFuncaoId,
+                FkSetorId = request.FkSetorId,
+                Descricao = request.Descricao
+            };
+
+            // 3. Adicionar e Salvar
+            await _context.UsuariosFuncoes.AddAsync(novaAssociacao);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Função {FuncaoId} associada ao Usuário PJ {UsuarioId} no Setor {SetorId}",
+                request.FkFuncaoId, request.FkUsuarioPjId, request.FkSetorId);
+
+            // 4. Retornar a resposta, usando RazaoSocial para o NomeUsuario
+            return new UsuarioFuncaoResponse
+            {
+                FkUsuarioPjId = usuario.Id,
+                FkFuncaoId = funcao.Id,
+                FkSetorId = setor.Id,
+                Descricao = novaAssociacao.Descricao,
+                NomeUsuario = usuario.RazaoSocial,
+                TituloFuncao = funcao.Titulo,
+                NomeSetor = setor.Nome
+            };
+        }
+
+        public async Task<IEnumerable<UsuarioFuncaoResponse>> GetFuncoesByPjIdAsync(Ulid usuarioPjId)
+        {
+            return await _context.UsuariosFuncoes
+                .AsNoTracking()
+                .Where(uf => uf.FkPessoaJuridicaId == usuarioPjId)
+                .Include(uf => uf.UsuarioJuridica)
+                .Include(uf => uf.Funcao)
+                .Include(uf => uf.Setor)
+                .Select(uf => new UsuarioFuncaoResponse
+                {
+                    FkUsuarioPjId = uf.FkPessoaJuridicaId,
+                    FkFuncaoId = uf.FkFuncaoId,
+                    FkSetorId = uf.FkSetorId,
+                    Descricao = uf.Descricao,
+                    NomeUsuario = uf.UsuarioJuridica.RazaoSocial,
+                    TituloFuncao = uf.Funcao.Titulo,
+                    NomeSetor = uf.Setor.Nome
+                })
+                .ToListAsync();
+        }
+
+        public async Task<bool> RemoveFuncaoFromPjAsync(AssignFuncaoPjRequest request)
+        {
+            // Encontra a associação pela chave composta
+            var associacao = await _context.UsuariosFuncoes.FirstOrDefaultAsync(uf =>
+                uf.FkPessoaJuridicaId == request.FkUsuarioPjId &&
+                uf.FkFuncaoId == request.FkFuncaoId &&
+                uf.FkSetorId == request.FkSetorId
+            );
+
+            if (associacao == null)
+            {
+                return false; // Associação não encontrada
+            }
+
+            _context.UsuariosFuncoes.Remove(associacao);
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Função {FuncaoId} removida do Usuário PJ {UsuarioId} no Setor {SetorId}",
+                request.FkFuncaoId, request.FkUsuarioPjId, request.FkSetorId);
+            return true;
+        }
     }
 }

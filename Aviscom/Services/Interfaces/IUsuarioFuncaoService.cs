@@ -8,5 +8,11 @@ namespace Aviscom.Services.Interfaces
         Task<UsuarioFuncaoResponse> AssignFuncaoToPfAsync(AssignFuncaoRequest request);
         Task<bool> RemoveFuncaoFromPfAsync(AssignFuncaoRequest request);
         Task<IEnumerable<UsuarioFuncaoResponse>> GetFuncoesByPfIdAsync(Ulid usuarioPfId);
+
+
+        // === NOVOS MÉTODOS PARA PJ ===
+        Task<UsuarioFuncaoResponse> AssignFuncaoToPjAsync(AssignFuncaoPjRequest request);
+        Task<bool> RemoveFuncaoFromPjAsync(AssignFuncaoPjRequest request);
+        Task<IEnumerable<UsuarioFuncaoResponse>> GetFuncoesByPjIdAsync(Ulid usuarioPjId);
     }
 }

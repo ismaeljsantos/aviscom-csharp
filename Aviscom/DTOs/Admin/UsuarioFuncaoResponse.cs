@@ -4,7 +4,9 @@ namespace Aviscom.DTOs.Admin
 {
     public class UsuarioFuncaoResponse
     {
-        public Ulid FkUsuarioPfId { get; set; }
+        public Ulid? FkUsuarioPfId { get; set; }
+        public Ulid? FkUsuarioPjId { get; set; }
+
         public Ulid FkFuncaoId { get; set; }
         public Ulid FkSetorId { get; set; }
 
