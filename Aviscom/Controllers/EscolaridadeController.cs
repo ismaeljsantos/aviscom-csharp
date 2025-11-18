@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NUlid;
+using System.Security.Claims;
 
 namespace Aviscom.Controllers
 {
@@ -101,19 +102,34 @@ namespace Aviscom.Controllers
         /// </summary>
         [HttpPut("escolaridades/{id}")]
         [ProducesResponseType(typeof(EscolaridadeResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateEscolaridade(Ulid id, [FromBody] CreateEscolaridadeRequest request)
         {
             // TODO FUTURO: Adicionar verificação de segurança
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isAdmin = User.IsInRole("Administrador");
 
             try
             {
-                var escolaridade = await _escolaridadeService.UpdateEscolaridadeAsync(id, request);
-                if (escolaridade == null)
+                var escolaridadeExistente = await _escolaridadeService.GetEscolaridadeByIdAsync(id);
+
+                if (escolaridadeExistente == null)
                 {
                     return NotFound(new { error = $"Registo de escolaridade com ID {id} não encontrado." });
                 }
-                return Ok(escolaridade);
+
+                var isDono = escolaridadeExistente.FkUsuarioId.ToString() == userIdClaim;
+
+                if (!isDono && !isAdmin)
+                {
+                    _logger.LogWarning("Acesso negado: Utilizador {LogadoId} tentou alterar escolaridade {EscolaridadeId} de outro utilizador.", userIdClaim, id);
+                    return Forbid(); // 403 Forbidden
+                }
+
+                var escolaridadeAtualizada = await _escolaridadeService.UpdateEscolaridadeAsync(id, request);
+                return Ok(escolaridadeAtualizada);
+
             }
             catch (KeyNotFoundException ex) // Se a nova Instituição não for encontrada
             {
@@ -132,17 +148,40 @@ namespace Aviscom.Controllers
         /// </summary>
         [HttpDelete("escolaridades/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteEscolaridade(Ulid id)
         {
             // TODO FUTURO: Adicionar verificação de segurança
 
-            var sucesso = await _escolaridadeService.DeleteEscolaridadeAsync(id);
-            if (!sucesso)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isAdmin = User.IsInRole("Administrador");
+
+            try
             {
-                return NotFound(new { error = $"Registo de escolaridade com ID {id} não encontrado." });
+                var escolaridadeExistente = await _escolaridadeService.GetEscolaridadeByIdAsync(id);
+
+                if (escolaridadeExistente == null)
+                {
+                    return NotFound(new { error = $"Registo de escolaridade com ID {id} não encontrado." });
+                }
+
+                var isDono = escolaridadeExistente.FkUsuarioId.ToString() == userIdClaim;
+
+                if (!isDono && !isAdmin)
+                {
+                    _logger.LogWarning("Acesso negado: Utilizador {LogadoId} tentou apagar escolaridade {EscolaridadeId} de outro utilizador.", userIdClaim, id);
+                    return Forbid();
+                }
+
+                await _escolaridadeService.DeleteEscolaridadeAsync(id);
+                return NoContent();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao excluir escolaridade {Id}", id);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
         }
     }
 }

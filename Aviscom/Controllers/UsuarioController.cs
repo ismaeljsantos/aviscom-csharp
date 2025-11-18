@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NUlid;
+using System.Security.Claims;
 
 namespace Aviscom.Controllers
 {
@@ -109,10 +110,28 @@ namespace Aviscom.Controllers
         /// </summary>
         [HttpPatch("pessoa-fisica/{id}")]
         [ProducesResponseType(typeof(UsuarioPessoaFisicaResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> UpdatePessoaFisica(Ulid id, [FromBody] UpdateUsuarioPessoaFisicaRequest request)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized();
+            }
+
+            var isDono = userIdClaim == id.ToString();
+            var isAdmin = User.IsInRole("Administrador");
+
+            if (!isDono && !isAdmin)
+            {
+                _logger.LogWarning("Acesso negado: Utilizador {LogadoId} tentou alterar perfil de {AlvoId}", userIdClaim, id);
+                return Forbid();
+            }
+
+
             try
             {
                 var usuario = await _usuarioService.UpdatePessoaFisicaAsync(id, request);

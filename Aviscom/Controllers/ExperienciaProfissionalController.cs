@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NUlid;
+using System.Security.Claims;
 
 namespace Aviscom.Controllers
 {
@@ -101,19 +102,32 @@ namespace Aviscom.Controllers
         /// </summary>
         [HttpPut("experiencias/{id}")]
         [ProducesResponseType(typeof(ExperienciaProfissionalResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateExperiencia(Ulid id, [FromBody] CreateExperienciaProfissionalRequest request)
         {
-            // TODO FUTURO: Adicionar verificação de segurança
+            // TODO: Adicionar verificação de segurança
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isAdmin = User.IsInRole("Administrador");
+
 
             try
             {
-                var experiencia = await _experienciaService.UpdateExperienciaAsync(id, request);
-                if (experiencia == null)
+                var experienciaExistente = await _experienciaService.GetExperienciaByIdAsync(id);
+
+                if (experienciaExistente == null)
                 {
                     return NotFound(new { error = $"Registo de experiência com ID {id} não encontrado." });
                 }
-                return Ok(experiencia);
+
+                var isDono = experienciaExistente.FkUsuarioId.ToString() == userIdClaim;
+                if (!isDono && !isAdmin)
+                {
+                    _logger.LogWarning("Acesso negado: Utilizador {LogadoId} tentou alterar experiência {ExperienciaId} de outro utilizador.", userIdClaim, id);
+                    return Forbid(); // 403 Forbidden
+                }
+                var experienciaAtualizada = await _experienciaService.UpdateExperienciaAsync(id, request);
+                return Ok(experienciaAtualizada);
             }
             catch (KeyNotFoundException ex) // Se a nova Empresa não for encontrada
             {
@@ -132,17 +146,38 @@ namespace Aviscom.Controllers
         /// </summary>
         [HttpDelete("experiencias/{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteExperiencia(Ulid id)
         {
-            // TODO FUTURO: Adicionar verificação de segurança
-
-            var sucesso = await _experienciaService.DeleteExperienciaAsync(id);
-            if (!sucesso)
+            // TODO: Adicionar verificação de segurança
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isAdmin = User.IsInRole("Administrador");
+            try
             {
-                return NotFound(new { error = $"Registo de experiência com ID {id} não encontrado." });
+                var experienciaExistente = await _experienciaService.GetExperienciaByIdAsync(id);
+
+                if (experienciaExistente == null)
+                {
+                    return NotFound(new { error = $"Registo de experiência com ID {id} não encontrado." });
+                }
+
+                var isDono = experienciaExistente.FkUsuarioId.ToString() == userIdClaim;
+
+                if (!isDono && !isAdmin)
+                {
+                    _logger.LogWarning("Acesso negado: Utilizador {LogadoId} tentou apagar experiência {ExperienciaId} de outro utilizador.", userIdClaim, id);
+                    return Forbid();
+                }
+                await _experienciaService.DeleteExperienciaAsync(id);
+                return NoContent();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao excluir experiência {Id}", id);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
         }
+       
     }
 }

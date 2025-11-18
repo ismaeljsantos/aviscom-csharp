@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NUlid;
+using System.Security.Claims;
 
 namespace Aviscom.Controllers
 {
@@ -100,17 +101,41 @@ namespace Aviscom.Controllers
         /// </summary>
         [HttpPut("contatos/{id}")]
         [ProducesResponseType(typeof(ContatoResponse), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateContato(Ulid id, [FromBody] CreateContatoRequest request)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isAdmin = User.IsInRole("Administrador"); 
+
             try
             {
-                var contato = await _contatoService.UpdateContatoAsync(id, request);
-                if (contato == null)
+                var contatoExistente = await _contatoService.GetContatoByIdAsync(id);
+
+                if (contatoExistente == null)
                 {
-                    return NotFound(new { error = $"Contato com ID {id} não encontrado." });
+                    return NotFound(new { error = $"Contacto com ID {id} não encontrado."});
                 }
-                return Ok(contato);
+
+                bool isDono = false;
+
+                if (contatoExistente.FkPessoaFisicaId.HasValue)
+                {
+                    isDono = contatoExistente.FkPessoaFisicaId.ToString() == userIdClaim;
+                }
+                else if (contatoExistente.FkPessoaFisicaId.HasValue)
+                {
+                    isDono = contatoExistente.FkPessoaJuridicaId.ToString() == userIdClaim;
+                }
+
+                if(!isDono && !isAdmin)
+                {
+                    _logger.LogWarning("Acesso negado: Utilizador {LogadoId} tentou alterar contacto {ContatoId} de outro utilizador.", userIdClaim, id);
+                    return Forbid(); // 403 Forbidden
+                }
+
+                var contatoAtualizado = await _contatoService.UpdateContatoAsync(id, request);
+                return Ok(contatoAtualizado);
             }
             catch (Exception ex)
             {
@@ -127,13 +152,35 @@ namespace Aviscom.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteContato(Ulid id)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var isAdmin = User.IsInRole("Administrador");
+
             try
             {
-                var sucesso = await _contatoService.DeleteContatoAsync(id);
-                if (!sucesso)
+                var contatoExistente = await _contatoService.GetContatoByIdAsync(id);
+
+                if (contatoExistente == null)
                 {
-                    return NotFound(new { error = $"Contato com ID {id} não encontrado." });
+                    return NotFound(new { error = $"Contacto com ID {id} não encontrado." });
                 }
+
+                bool isDono = false;
+                if (contatoExistente.FkPessoaFisicaId.HasValue)
+                {
+                    isDono = contatoExistente.FkPessoaFisicaId.ToString() == userIdClaim;
+                }
+                else if (contatoExistente.FkPessoaJuridicaId.HasValue)
+                {
+                    isDono = contatoExistente.FkPessoaJuridicaId.ToString() == userIdClaim;
+                }
+
+                if (!isDono && !isAdmin)
+                {
+                    _logger.LogWarning("Acesso negado: Utilizador {LogadoId} tentou apagar contacto {ContatoId} de outro utilizador.", userIdClaim, id);
+                    return Forbid();
+                }
+
+                await _contatoService.DeleteContatoAsync(id);
                 return NoContent();
             }
             catch (Exception ex)
