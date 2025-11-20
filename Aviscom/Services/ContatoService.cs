@@ -112,14 +112,15 @@ namespace Aviscom.Services
         public async Task<bool> DeleteContatoAsync(Ulid id)
         {
             var contato = await _context.Contatos.FindAsync(id);
-            if (contato == null)
+            if (contato == null || !contato.IsAtivo)
             {
                 return false; 
             }
 
-            _context.Contatos.Remove(contato);
+            //_context.Contatos.Remove(contato);
+            contato.IsAtivo = false; // Soft Delete
             await _context.SaveChangesAsync();
-            _logger.LogInformation("Contato {ContatoId} excluído.", id);
+            _logger.LogInformation("Contato {ContatoId} excluído (Soft Delete).", id);
             return true;
         }
 

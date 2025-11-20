@@ -73,7 +73,7 @@ builder.Services.AddDbContext<AviscomContext>(options =>
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
-builder.Services.AddScoped<IEnderecoService, EnderecaoService>();
+builder.Services.AddScoped<IEnderecoService, EnderecoService>();
 builder.Services.AddScoped<IContatoService, ContatoService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

@@ -56,7 +56,7 @@ namespace Aviscom.Services
         {
             return await _context.Funcoes
                 .AsNoTracking()
-                .Where(f => f.Id == id)
+                .Where(f => f.Id == id && f.IsAtivo)
                 .Select(f => new FuncaoResponse
                 {
                     Id = f.Id,

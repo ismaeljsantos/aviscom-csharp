@@ -29,6 +29,7 @@ namespace Aviscom.Services
         {
             var usuarios = await _context.UsuariosFisicos
                 .AsNoTracking()
+                .Where(u => u.IsAtivo)
                 .Select(u => new UsuarioPessoaFisicaResponse
                 { 
                     Id = u.Id,
@@ -50,7 +51,7 @@ namespace Aviscom.Services
 
             var usuario = await _context.UsuariosFisicos 
                 .AsNoTracking()
-                .Where(u => u.Id == id) 
+                .Where(u => u.Id == id && u.IsAtivo) 
                 .Select(u => new UsuarioPessoaFisicaResponse
                 {
                     Id = u.Id,
@@ -165,12 +166,14 @@ namespace Aviscom.Services
         {
             var usuario = await _context.UsuariosFisicos.FindAsync(id);
 
-            if(usuario == null)
+            if(usuario == null || !usuario.IsAtivo)
             { 
                 return false;
             }
 
-            _context.UsuariosFisicos.Remove(usuario);
+            usuario.IsAtivo = false;
+
+            //_context.UsuariosFisicos.Remove(usuario);
             await _context.SaveChangesAsync();
 
             return true;
@@ -237,6 +240,7 @@ namespace Aviscom.Services
             // Usamos .Select() para projetar diretamente para o DTO
             return await _context.UsuariosJuridicos
                 .AsNoTracking()
+                .Where(u => u.IsAtivo)
                 .Include(u => u.Responsavel) // Inclui o Responsável (PF)
                 .Select(u => new UsuarioPessoaJuridicaResponse
                 {
@@ -255,7 +259,7 @@ namespace Aviscom.Services
         {
             return await _context.UsuariosJuridicos
                 .AsNoTracking()
-                .Where(u => u.Id == id)
+                .Where(u => u.Id == id && u.IsAtivo)
                 .Include(u => u.Responsavel) //
                 .Select(u => new UsuarioPessoaJuridicaResponse
                 {
@@ -318,19 +322,22 @@ namespace Aviscom.Services
         public async Task<bool> DeletePessoaJuridicaAsync(Ulid id)
         {
             var usuarioPJ = await _context.UsuariosJuridicos.FindAsync(id);
-            if (usuarioPJ == null)
+            if (usuarioPJ == null || !usuarioPJ.IsAtivo)
             {
-                return false; // Não encontrado
+                return false; 
             }
 
             // Lógica de exclusão em cascata (se necessária)
             // (Conforme discutimos, o padrão atual para Endereço/Contato
             // é 'ClientSetNull', então eles ficarão órfãos, o que é aceitável por agora)
 
-            _context.UsuariosJuridicos.Remove(usuarioPJ);
+            //_context.UsuariosJuridicos.Remove(usuarioPJ);
+            //await _context.SaveChangesAsync();
+
+            usuarioPJ.IsAtivo = false; 
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Utilizador PJ {UserId} excluído.", id);
+            _logger.LogInformation("Utilizador PJ {UserId} excluído (Soft Delete).", id);
             return true;
         }
 

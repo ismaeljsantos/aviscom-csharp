@@ -7,12 +7,12 @@ using NUlid;
 
 namespace Aviscom.Services
 {
-    public class EnderecaoService : IEnderecoService
+    public class EnderecoService : IEnderecoService
     {
         private readonly AviscomContext _context;
         private readonly ILogger _logger;
 
-        public EnderecaoService(AviscomContext context, ILogger<IEnderecoService> logger)
+        public EnderecoService(AviscomContext context, ILogger<IEnderecoService> logger)
         {
             _context = context;
             _logger = logger;
@@ -113,7 +113,7 @@ namespace Aviscom.Services
         {
             var endereco = await _context.Enderecos
                 .AsNoTracking()
-                .Where(e => e.Id == id)
+                .Where(e => e.Id == id && !e.IsAtivo)
                 .Select(e => new EnderecoResponse
                 {
                     Id = e.Id,
@@ -192,7 +192,7 @@ namespace Aviscom.Services
         {
             return await _context.Enderecos
                 .AsNoTracking()
-                .Where(e => e.FkPessoaJuridicaId == usuarioPjId) // Filtra por PJ ID
+                .Where(e => e.FkPessoaJuridicaId == usuarioPjId && e.IsAtivo) // Filtra por PJ ID
                 .Select(e => new EnderecoResponse
                 {
                     Id = e.Id,
