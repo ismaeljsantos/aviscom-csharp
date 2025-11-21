@@ -167,5 +167,33 @@ namespace Aviscom.Controllers
                 return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
             }
         }
+
+
+        /// <summary>
+        /// Lista todos os usuários (PF e PJ) associados a uma função pelo Título da Função. (Requer Admin)
+        /// </summary>
+        [HttpGet("usuareios-por-funcao/{tituloFuncao}")]
+        [ProducesResponseType(typeof(IEnumerable<FuncaoAssociacaoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetUsuarioPorFuncao([FromRoute] string tituloFuncao)
+        {
+            try
+            {
+                var usuarios = await _usuarioFuncaoService.GetUsuariosByFuncaoTituloAsync(tituloFuncao);
+
+                return Ok(usuarios);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                // NOVO: Captura a exceção do Service e retorna 404
+                _logger.LogWarning(ex, "Falha ao buscar usuários por função: {Message}", ex.Message);
+                return NotFound(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro inesperado ao buscar usuários pela função: {Titulo}", tituloFuncao);
+                return StatusCode(500, new { error = "Ocorreu um erro interno no servidor." });
+            }
+        }
     }
 }

@@ -190,5 +190,62 @@ namespace Aviscom.Services
                 request.FkFuncaoId, request.FkUsuarioPjId, request.FkSetorId);
             return true;
         }
+
+        // ====================================================
+        // === MÉTODO PARA LISTAR POR FUNÇÃO SOMERNTE ADMIN ===
+        // ====================================================
+        public async Task<IEnumerable<FuncaoAssociacaoResponse>> GetUsuariosByFuncaoTituloAsync(string tituloFuncao)
+        {
+            // 1. Buscar a função pelo título (ignorando maiúsculas/minúsculas)
+            var funcao = await _context.Funcoes
+                .AsNoTracking()
+                .Where(f => f.Titulo.ToLower() == tituloFuncao.ToLower() && f.IsAtivo)
+                .FirstOrDefaultAsync();
+
+            if (funcao == null)
+            {
+                // NOVO: Lançar exceção, delegando o tratamento do 404 ao Controller.
+                throw new KeyNotFoundException($"Função com título '{tituloFuncao}' não encontrada ou inativa.");
+            }
+
+            var funcaoId = funcao.Id;
+
+            // 2. Consulta para Pessoas Físicas (PF)
+            var usuariosPf = await _context.UsuariosFuncoes
+                .AsNoTracking()
+                .Where(uf => uf.FkFuncaoId == funcaoId && uf.IsAtivo)
+                .Include(uf => uf.UsuarioFisica)
+                .Include(uf => uf.Setor)
+                .Where(uf => uf.UsuarioFisica.IsAtivo) // Filtro Soft Delete para o utilizador PF
+                .Select(uf => new FuncaoAssociacaoResponse
+                {
+                    UsuarioId = uf.FkPessoaFisicaId.Value,
+                    Nome = uf.UsuarioFisica.Nome,
+                    TipoUsuario = "PF",
+                    DescricaoFuncao = uf.Descricao,
+                    NomeSetor = uf.Setor.Nome
+                })
+                .ToListAsync();
+
+            // 3. Consulta para Pessoas Jurídicas (PJ)
+            var usuariosPj = await _context.UsuariosFuncoes
+                .AsNoTracking()
+                .Where(uf => uf.FkFuncaoId == funcaoId && uf.IsAtivo)
+                .Include(uf => uf.UsuarioJuridica)
+                .Include(uf => uf.Setor)
+                .Where(uf => uf.UsuarioJuridica.IsAtivo) // Filtro Soft Delete para o utilizador PJ
+                .Select(uf => new FuncaoAssociacaoResponse
+                {
+                    UsuarioId = uf.FkPessoaJuridicaId.Value,
+                    Nome = uf.UsuarioJuridica.RazaoSocial,
+                    TipoUsuario = "PJ",
+                    DescricaoFuncao = uf.Descricao,
+                    NomeSetor = uf.Setor.Nome
+                })
+                .ToListAsync();
+
+            // 4. Combina e retorna as duas listas
+            return usuariosPf.Concat(usuariosPj);
+        }
     }
 }

@@ -83,17 +83,29 @@ namespace Aviscom.Services
         public async Task<bool> DeleteFuncaoAsync(Ulid id)
         {
             var funcao = await _context.Funcoes.FindAsync(id);
-            if (funcao == null)
+            if (funcao == null || !funcao.IsAtivo)
             {
                 return false;
             }
             // TODO: Adicionar lógica para verificar se a função
             // a ser usada por algum 'UsuarioFuncao' antes de apagar.
 
-            _context.Funcoes.Remove(funcao);
+            var estaEmUso = await _context.UsuariosFuncoes
+                .AsNoTracking()
+                .Where(uf => uf.FkFuncaoId == id && uf.IsAtivo)
+                .AnyAsync();
+
+            if (estaEmUso)
+            {
+                throw new InvalidOperationException("Não é possivel desativar a função. Ela está em uso por um ou mais usuários ativos.");
+            }
+
+
+            //_context.Funcoes.Remove(funcao);
+            funcao.IsAtivo = false; // Soft Delete
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Função {FuncaoId} excluída.", id);
+            _logger.LogInformation("Função {FuncaoId} excluída (Soft Delete).", id);
             return true;
         }
 
@@ -107,5 +119,7 @@ namespace Aviscom.Services
                 Titulo = funcao.Titulo
             };
         }
+
+        
     }
 }
