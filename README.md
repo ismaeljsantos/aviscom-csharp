@@ -7,16 +7,16 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 - **CRUD de Utilizador Pessoa Física:** Gestão completa (Criar, Ler, Atualizar, Excluir) de utilizadores.
 - **CRUD de Utilizador Pessoa Jurídica:** Gestão completa (Criar, Ler, Atualizar, Excluir) de utilizadores PJ.
 - **Gestão de Perfil:** CRUDs completos para `Endereco`, `Contato`, `Escolaridade` e `ExperienciaProfissional`, associados tanto a Pessoas Físicas como Jurídicas.
-- **Gestão de Dados Mestres:** CRUDs seguros (apenas Admin) para entidades de apoio como `Empresa` e `Instituicao`.
 - **Autenticação e Autorização (JWT):** Implementa login com JSON Web Tokens (JWT) para ambos PF e PJ, e autorização baseada em Funções (Roles) (ex: "Administrador").
 - **Gestão de Funções (Admin):** CRUDs completos e seguros para gerir `Funcoes`, `Setores` e a sua associação aos utilizadores (`UsuarioFuncao`).
+- **Segurança de Recurso:** Implementação da lógica de "Dono do Recurso" para todos os `UPDATE`s e `DELETE`s.
 - **Segurança:**
   - **Hashing de Senha:** Senhas são armazenadas usando **BCrypt**.
   - **Hashing de Dados:** CPFs/CNPJs são hasheados com **SHA256** para verificação rápida de duplicidade.
   - **Criptografia:** CPFs são criptografados com **AES-256** (bidirecional) na base de dados.
 - **Validação Avançada (DTOs):**
   - **CPF/CNPJ:** Aceita formatos com ou sem máscara.
-  - **Datas:** Aceita múltiplos formatos de data (`ddMMyyyy`, `dd/MM/yyyy`, `dd-MM-yyyy`) na entrada.
+  - **Datas:** Aceita múltiplos formatos de data (`ddMMyyyy`, `dd/MM/yyyy`, `dd-MM/yyyy`) na entrada.
   - **Validação Customizada:** Regras de negócio complexas (ex: validar `Valor` do contacto com base no `Tipo`).
 - **Formatação de Resposta:**
   - **Datas:** Retorna datas no formato `dd/MM/yyyy`.
@@ -109,7 +109,7 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 - `POST /api/usuarios/pessoa-fisica` - **(Público)** Cria um novo utilizador.
 - `GET /api/usuarios/pessoa-fisica` - **(Admin)** Lista todos os utilizadores.
 - `GET /api/usuarios/pessoa-fisica/{id}` - **(Logado)** Busca um utilizador por ID.
-- `PATCH /api/usuarios/pessoa-fisica/{id}` - **(Logado)** Atualiza um utilizador (parcial).
+- `PATCH /api/usuarios/pessoa-fisica/{id}` - **(Logado/Dono)** Atualiza um utilizador (parcial).
 - `DELETE /api/usuarios/pessoa-fisica/{id}` - **(Admin)** Exclui um utilizador.
 
 ### Utilizador Pessoa Jurídica
@@ -117,7 +117,7 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 - `POST /api/usuarios/pessoa-juridica` - **(Público)** Cria um novo utilizador.
 - `GET /api/usuarios/pessoa-juridica` - **(Admin)** Lista todos os utilizadores.
 - `GET /api/usuarios/pessoa-juridica/{id}` - **(Logado)** Busca um utilizador por ID.
-- `PATCH /api/usuarios/pessoa-juridica/{id}` - **(Logado)** Atualiza um utilizador (parcial).
+- `PATCH /api/usuarios/pessoa-juridica/{id}` - **(Logado/Dono)** Atualiza um utilizador (parcial).
 - `DELETE /api/usuarios/pessoa-juridica/{id}` - **(Admin)** Exclui um utilizador.
 
 ### Endereços (Requer Login)
@@ -126,9 +126,9 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 - `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/enderecos` - Lista os endereços de um PF.
 - `POST /api/usuarios/pessoa-juridica/{usuarioPjId}/enderecos` - Cria um endereço para um PJ.
 - `GET /api/usuarios/pessoa-juridica/{usuarioPjId}/enderecos` - Lista os endereços de um PJ.
-- `GET /api/enderecos/{id}` - Busca um endereço por seu ID.
-- `PUT /api/enderecos/{id}` - Atualiza um endereço por seu ID.
-- `DELETE /api/enderecos/{id}` - Exclui um endereço por seu ID.
+- `GET /api/enderecos/{id}` - **(Logado/Dono)** Busca um endereço por seu ID.
+- `PUT /api/enderecos/{id}` - **(Logado/Dono)** Atualiza um endereço por seu ID.
+- `DELETE /api/enderecos/{id}` - **(Logado/Dono)** Exclui um endereço por seu ID.
 
 ### Contactos (Requer Login)
 
@@ -136,25 +136,25 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 - `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/contatos` - Lista os contactos de um PF.
 - `POST /api/usuarios/pessoa-juridica/{usuarioPjId}/contatos` - Cria um contacto para um PJ.
 - `GET /api/usuarios/pessoa-juridica/{usuarioPjId}/contatos` - Lista os contactos de um PJ.
-- `GET /api/contatos/{id}` - Busca um contacto por seu ID.
-- `PUT /api/contatos/{id}` - Atualiza um contacto por seu ID.
-- `DELETE /api/contatos/{id}` - Exclui um contacto por seu ID.
+- `GET /api/contatos/{id}` - **(Logado/Dono)** Busca um contacto por seu ID.
+- `PUT /api/contatos/{id}` - **(Logado/Dono)** Atualiza um contacto por seu ID.
+- `DELETE /api/contatos/{id}` - **(Logado/Dono)** Exclui um contacto por seu ID.
 
 ### Escolaridade (Requer Login)
 
 - `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/escolaridades` - Cria um registo de escolaridade.
 - `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/escolaridades` - Lista as escolaridades de um utilizador.
-- `GET /api/escolaridades/{id}` - Busca uma escolaridade por seu ID.
-- `PUT /api/escolaridades/{id}` - Atualiza uma escolaridade por seu ID.
-- `DELETE /api/escolaridades/{id}` - Exclui uma escolaridade por seu ID.
+- `GET /api/escolaridades/{id}` - **(Logado/Dono)** Busca uma escolaridade por seu ID.
+- `PUT /api/escolaridades/{id}` - **(Logado/Dono)** Atualiza uma escolaridade por seu ID.
+- `DELETE /api/escolaridades/{id}` - **(Logado/Dono)** Exclui uma escolaridade por seu ID.
 
 ### Experiência Profissional (Requer Login)
 
 - `POST /api/usuarios/pessoa-fisica/{usuarioPfId}/experiencias` - Cria um registo de experiência.
 - `GET /api/usuarios/pessoa-fisica/{usuarioPfId}/experiencias` - Lista as experiências de um utilizador.
-- `GET /api/experiencias/{id}` - Busca uma experiência por seu ID.
-- `PUT /api/experiencias/{id}` - Atualiza uma experiência por seu ID.
-- `DELETE /api/experiencias/{id}` - Exclui uma experiência por seu ID.
+- `GET /api/experiencias/{id}` - **(Logado/Dono)** Busca uma experiência por seu ID.
+- `PUT /api/experiencias/{id}` - **(Logado/Dono)** Atualiza uma experiência por seu ID.
+- `DELETE /api/experiencias/{id}` - **(Logado/Dono)** Exclui uma experiência por seu ID.
 
 ### Administração (Requer Admin)
 
@@ -167,6 +167,9 @@ API RESTful construída em .NET 8 para o sistema Aviscom, focada em gestão de u
 - `POST /api/admin/associacoes-funcao/pessoa-fisica` - Associa um utilizador PF a uma Função/Setor.
 - `DELETE /api/admin/associacoes-funcao/pessoa-fisica` - Remove uma associação.
 - `GET /api/admin/associacoes-funcao/pessoa-fisica/{usuarioPfId}` - Lista as associações de um utilizador.
+- `POST /api/admin/associacoes-funcao/pessoa-juridica` - Associa um utilizador PJ a uma Função/Setor.
+- `DELETE /api/admin/associacoes-funcao/pessoa-juridica` - Remove uma associação.
+- `GET /api/admin/associacoes-funcao/pessoa-juridica/{usuarioPjId}` - Lista as associações de um utilizador.
 - `GET /api/empresas` - Lista todas as Empresas.
 - `POST /api/empresas` - Cria uma nova Empresa.
 - `...` (CRUD completo para Empresas)
